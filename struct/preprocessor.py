@@ -6,7 +6,7 @@ class Preprocessor(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __transform(self, xi):
+    def transform(self, xi):
         pass
 
     def compute(self, x):
