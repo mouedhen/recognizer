@@ -12,5 +12,5 @@ class Preprocessor(object):
     def compute(self, x):
         xt = []
         for xi in x:
-            xt.append(self.__transform(xi))
+            xt.append(self.transform(xi))
         return xt
