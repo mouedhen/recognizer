@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 from feature import Feature
-from classifer import Classifier
+from classifier import Classifier
 
 
 class Model(object):
@@ -13,7 +13,7 @@ class Model(object):
         if not isinstance(feature, Feature):
             raise TypeError("feature must be type of Feature")
         if not isinstance(classifier, Classifier):
-                raise TypeError("classifier must be type of Classifier")
+            raise TypeError("classifier must be type of Classifier")
 
         self.feature = feature
         self.classifier = classifier
