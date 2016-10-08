@@ -25,3 +25,11 @@ class Model(object):
     def predict(self, x):
         subject = self.feature.extract(x)
         return self.classifier.predict(subject)
+
+    @abstractmethod
+    def train(self):
+        pass
+
+    @abstractmethod
+    def save(self):
+        pass
