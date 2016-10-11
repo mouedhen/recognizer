@@ -26,8 +26,7 @@ class HaarDetector(Detector):
         self.min_size = min_size
 
     def detect(self, src):
-        if np.ndim(src) == 3:
-            src = ImagePreprocessor.transform(src)
+        src = ImagePreprocessor.transform(src)
         rectangles = self.cascade.detectMultiScale(src, scaleFactor=self.scale_factor,
                                                    minNeighbors=self.min_neighbors, minSize=self.min_size)
         if len(rectangles) == 0:

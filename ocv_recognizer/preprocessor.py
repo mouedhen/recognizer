@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import cv2
 from abc import ABCMeta, abstractmethod
+import numpy as np
 
 
 class Preprocessor(object):
@@ -26,9 +27,12 @@ class ImagePreprocessor(Preprocessor):
 
     @staticmethod
     def transform(image):
-        return cv2.equalizeHist(
-            cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        )
+        if not np.ndim(image) == 3:
+            return cv2.equalizeHist(
+                cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            )
+        else:
+            return image
 
     @staticmethod
     def crop(image, rectangle):

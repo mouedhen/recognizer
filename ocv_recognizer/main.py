@@ -3,11 +3,13 @@
 import argparse
 import sys
 import cv2
+import os
+import numpy as np
 
 from dataset import FacesDataSet
 from preprocessor import ImagePreprocessor
 from detector import HaarDetector
-from helpers import draw_rectangles
+from helpers import draw_rectangles, gif_to_jpeg
 
 
 DATASET = "/home/chams/data/recognizer/data"
@@ -15,48 +17,79 @@ MAXDATA = 100
 HAARCASCADEPATH = "/home/chams/data/recognizer/haar_classifier/haarcascade_frontalface_default.xml"
 
 
-def dir_train(args):
-    print 'directory trainer'
+# @TODO : add support of all images' formats
+def dir_trainer(args):
+    raw_data_path = args.path
+    detector = HaarDetector(HAARCASCADEPATH)
+    dataset = FacesDataSet(DATASET)
+
+    subjects = map(lambda x: os.path.join(raw_data_path, x), os.listdir(raw_data_path))
+    subjects = filter(lambda x: os.path.isdir(x), subjects)
+    if not len(subjects) > 0:
+        return -1
+    for subject in subjects:
+        key = os.path.basename(os.path.normpath(subject))
+        dataset.init_subject(key)
+        images = map(lambda x: os.path.join(subject, x), os.listdir(subject))
+
+        for image in images:
+            frame = gif_to_jpeg(image)
+            train(detector, dataset, frame, key, reevaluate=False)
+            cv2.imshow("Training", frame)
+            cv2.waitKey(50)
+        print "subject {} training complete".format(key)
     return 0
 
 
 def video_trainer(args):
-    # Initialize
+
+    """
+    Add faces data of the subject in front of the camera to the dataset
+    :param args: must contain the subject ID
+    :return: 0 if success
+    """
+
     subject = args.subject
     detector = HaarDetector(HAARCASCADEPATH)
     dataset = FacesDataSet(DATASET)
     capture = cv2.VideoCapture()
-
     dataset.init_subject(subject)
     capture.open(0)
     while True:
-        # capture video frame by frame
         ret, frame = capture.read()
-        # preprocess frame
-        image = ImagePreprocessor.transform(frame)
-        # detect faces
-        rectangles = detector.detect(image)
-        # Draw rectangle in the frame that will be shown
-        draw_rectangles(frame, rectangles, (0, 255, 0))
-
-        total_faces = dataset.subject_data_length(subject)
-
-        print "subject face number {}".format(total_faces)
-
-        if len(rectangles) > 0 and total_faces < MAXDATA:
-            for r in rectangles:
-                # crop and resize image
-                face = ImagePreprocessor.resize(ImagePreprocessor.crop(image, r))
-                if len(detector.detect(face)) == 1:
-                    # add the image to the dataset
-                    dataset.add(subject, face)
-
+        total_faces = train(detector, dataset, frame, subject)
         cv2.imshow(subject, frame)
         if total_faces >= MAXDATA:
             print "Training of the subject {} complete. You can quit.".format(subject)
         if 0xFF & cv2.waitKey(5) == 27:
             break
     return 0
+
+
+def train(detector, dataset, frame, subject, reevaluate=True):
+
+    """
+    :param detector: a haar cascade detector
+    :param dataset: the dataset where the subject will be added
+    :param frame: an opencv image matrix
+    :param subject: subject to be added / updated in the dataset
+    :param reevaluate: Reevaluate detected face, default True
+    :return: Total data images for the subject
+    """
+
+    image = ImagePreprocessor.transform(frame)
+    rectangles = detector.detect(image)
+    draw_rectangles(frame, rectangles, (0, 255, 0))
+    total_faces = dataset.subject_data_length(subject)
+    if len(rectangles) > 0 and total_faces < MAXDATA:
+        for r in rectangles:
+            face = ImagePreprocessor.resize(ImagePreprocessor.crop(image, r), (50, 50))
+            if reevaluate:
+                if len(detector.detect(face)) == 1:
+                    dataset.add(subject, face)
+            else:
+                dataset.add(subject, face)
+    return total_faces
 
 
 def dir_recognizer(args):
@@ -88,7 +121,7 @@ def __main__():
 
     parser_dir_trainer = sub_parser.add_parser('dir_trainer', help=DIR_TRAINER)
     parser_dir_trainer.add_argument('--path', '-p', help='Data directory path', required=True)
-    parser_dir_trainer.set_defaults(func=dir_train)
+    parser_dir_trainer.set_defaults(func=dir_trainer)
 
     parser_video_recognizer = sub_parser.add_parser('video_recognizer', help=VIDEO_RECOGNIZER)
     parser_video_recognizer.set_defaults(func=video_recognizer)
