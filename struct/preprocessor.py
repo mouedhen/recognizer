@@ -5,8 +5,9 @@ class Preprocessor(object):
 
     __metaclass__ = ABCMeta
 
+    @staticmethod
     @abstractmethod
-    def transform(self, xi):
+    def transform(xi):
         pass
 
     def compute(self, x):

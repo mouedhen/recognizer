@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
-import sys
 import os
 import cv2
 import numpy as np
-
 from preprocessor import ImagePreprocessor
-from struct.detector import Detector
+from abc import ABCMeta, abstractmethod
 
 
-sys.path.append("..")
+class Detector(object):
+
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def detect(self, source):
+        pass
 
 
 class HaarDetector(Detector):
@@ -23,10 +27,9 @@ class HaarDetector(Detector):
 
     def detect(self, src):
         if np.ndim(src) == 3:
-            preprocessor = ImagePreprocessor()
-            src = preprocessor.transform(src)
-        rectangles = self.cascade.detect(src, scaleFactor=self.scale_factor,
-                                         minNeighbors=self.min_neighbors, minSize=self.min_size)
+            src = ImagePreprocessor.transform(src)
+        rectangles = self.cascade.detectMultiScale(src, scaleFactor=self.scale_factor,
+                                                   minNeighbors=self.min_neighbors, minSize=self.min_size)
         if len(rectangles) == 0:
             return np.ndarray((0,))
         rectangles[:, 2:] += rectangles[:, :2]
