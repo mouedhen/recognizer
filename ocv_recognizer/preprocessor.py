@@ -13,8 +13,9 @@ class ImagePreprocessor(Preprocessor):
         pass
 
     def transform(self, image):
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        return cv2.equalizeHist(image)
+        return cv2.equalizeHist(
+            cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        )
 
     def compute(self, images):
         return super(ImagePreprocessor, self).compute(images)
